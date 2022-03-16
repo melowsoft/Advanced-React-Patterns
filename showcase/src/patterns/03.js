@@ -184,6 +184,8 @@ const MediumClap = ({ children }) => {
   );
 };
 
+
+
 /** ====================================
    *      🔰SubComponents
   Smaller Component used by <MediumClap />
@@ -222,6 +224,10 @@ const CountTotal = () => {
   );
 };
 
+MediumClap.ClapIcon = ClapIcon;
+MediumClap.ClapCount = ClapCount;
+MediumClap.CountTotal = CountTotal;
+
 /** ====================================
       *        🔰USAGE
       Below's how a potential user
@@ -231,9 +237,9 @@ const CountTotal = () => {
 const Usage = () => {
   return (
     <MediumClap>
-      <ClapIcon />
-      <ClapCount />
-      <CountTotal />
+      <MediumClap.ClapIcon />
+      <MediumClap.ClapCount />
+      <MediumClap.CountTotal />
     </MediumClap>
   );
 };

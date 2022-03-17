@@ -137,6 +137,7 @@ const MediumClap = ({
   onClap,
   style: userStyles = {},
   className,
+  values = null,
 }) => {
   const MAXIMUM_USER_CLAP = 50;
   const [clapState, setClapState] = useState(initialState);
@@ -163,29 +164,39 @@ const MediumClap = ({
   const componentJustMounted = useRef(true);
 
   useEffect(() => {
-    if (!componentJustMounted.current) {
+    if (!componentJustMounted.current && !isControlled) {
       onClap && onClap(clapState);
     }
 
     componentJustMounted.current = false;
-  }, [count]);
+  }, [count, onClap, isControlled]);
+
+  // controlled component?
+  const isControlled = !!values && onClap;
 
   const handleClapClick = () => {
     animationTimeline.replay();
 
-    setClapState((prevState) => ({
-      count: Math.min(count + 1, MAXIMUM_USER_CLAP),
-      countTotal:
-        count < MAXIMUM_USER_CLAP
-          ? prevState.countTotal + 1
-          : prevState.countTotal,
-      isClicked: true,
-    }));
+    isControlled
+      ? onClap()
+      : setClapState((prevState) => ({
+          count: Math.min(count + 1, MAXIMUM_USER_CLAP),
+          countTotal:
+            count < MAXIMUM_USER_CLAP
+              ? prevState.countTotal + 1
+              : prevState.countTotal,
+          isClicked: true,
+        }));
   };
 
+  const getState = useCallback(
+    () => (isControlled ? values : clapState),
+    [clapState, values, isControlled]
+  );
+
   const memoizedValue = useMemo(
-    () => ({ ...clapState, setRef }),
-    [clapState, setRef]
+    () => ({ ...getState(), setRef }),
+    [getState, setRef]
   );
 
   const classNames = [styles.clap, className].join(" ").trim();
@@ -211,9 +222,11 @@ const MediumClap = ({
     ==================================== **/
 
 const ClapIcon = ({ style: userStyles = {}, className }) => {
-    const { isClicked } = useContext(MediumClapContext);
-    
-    const classNames = [styles.icon, isClicked ? styles.checked : '',  className].join(" ").trim();
+  const { isClicked } = useContext(MediumClapContext);
+
+  const classNames = [styles.icon, isClicked ? styles.checked : "", className]
+    .join(" ")
+    .trim();
   return (
     <span>
       <svg
@@ -230,9 +243,9 @@ const ClapIcon = ({ style: userStyles = {}, className }) => {
   );
 };
 const ClapCount = ({ style: userStyles = {}, className }) => {
-    const { count, setRef } = useContext(MediumClapContext);
-    
-    const classNames = [styles.count, className].join(" ").trim();
+  const { count, setRef } = useContext(MediumClapContext);
+
+  const classNames = [styles.count, className].join(" ").trim();
   return (
     <span
       style={userStyles}
@@ -268,21 +281,35 @@ MediumClap.CountTotal = CountTotal;
         may consume the component API
     ==================================== **/
 
+const INITIAL_STATE = {
+  count: 0,
+  countTotal: 2100,
+  isClicked: false,
+}   
+ 
+const MINIMUM_CLAP_VAL = 10
+
 const Usage = () => {
-  const [count, setCount] = useState(0);
-  const handleClap = (clapState) => {
-    setCount(clapState.count);
+  const [state, setState] = useState(INITIAL_STATE);
+  const handleClap = () => {
+    setState(({count, countTotal}) => ({
+    count: Math.min(count + 1, MINIMUM_CLAP_VAL),
+      countTotal: count < MINIMUM_CLAP_VAL ? countTotal + 1 : countTotal,
+    isClicked: true
+    }))
   };
   return (
     <div style={{ width: "100%" }}>
-      <MediumClap onClap={handleClap} className={userCustomStyles.clap}>
+      <MediumClap values={state} onClap={handleClap} className={userCustomStyles.clap}>
         <MediumClap.ClapIcon className={userCustomStyles.icon} />
         <MediumClap.ClapCount className={userCustomStyles.count} />
         <MediumClap.CountTotal className={userCustomStyles.total} />
       </MediumClap>
-      {!!count && (
-        <div className={styles.info}>{`You have clapped ${count} times`}</div>
-      )}
+      <MediumClap values={state} onClap={handleClap} className={userCustomStyles.clap}>
+        <MediumClap.ClapIcon className={userCustomStyles.icon} />
+        <MediumClap.ClapCount className={userCustomStyles.count} />
+        <MediumClap.CountTotal className={userCustomStyles.total} />
+      </MediumClap>
     </div>
   );
 };
